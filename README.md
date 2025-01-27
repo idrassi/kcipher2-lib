@@ -160,42 +160,42 @@ A typical console output will show test results (PASS/FAIL) and performance metr
 
 ## Benchmark Results
 
-Below are example benchmark results measured on an x64 system (numbers will vary based on CPU and OS):
+Below are example benchmark results measured on an x64 system with Core(TM) i9-13900HX (numbers will vary based on CPU and OS):
 
 ```
 KCipher-2 Benchmark Results:
 ------------------------
 Data size:        65536 bytes
 Iterations:       30
-Time per run:     0.000096 seconds
-Throughput:       653.49 MB/s
-                  5227.94 Mb/s
-Cycles per byte:  3.53
+Time per run:     0.000060 seconds
+Throughput:       1035.97 MB/s
+                  8287.75 Mb/s
+Cycles per byte:  2.23
 ------------------------
 Data size:        1048576 bytes
 Iterations:       30
-Time per run:     0.001196 seconds
-Throughput:       836.20 MB/s
-                  6689.60 Mb/s
-Cycles per byte:  2.76
+Time per run:     0.000995 seconds
+Throughput:       1005.52 MB/s
+                  8044.16 Mb/s
+Cycles per byte:  2.29
 ------------------------
 Data size:        10485760 bytes
 Iterations:       30
-Time per run:     0.013443 seconds
-Throughput:       743.89 MB/s
-                  5951.10 Mb/s
-Cycles per byte:  3.10
+Time per run:     0.010596 seconds
+Throughput:       943.78 MB/s
+                  7550.20 Mb/s
+Cycles per byte:  2.44
 ------------------------
 Data size:        104857600 bytes
 Iterations:       30
-Time per run:     0.142959 seconds
-Throughput:       699.50 MB/s
-                  5596.01 Mb/s
-Cycles per byte:  3.30
+Time per run:     0.106749 seconds
+Throughput:       936.78 MB/s
+                  7494.21 Mb/s
+Cycles per byte:  2.46
 ------------------------
 ```
 
-These figures demonstrate competitive throughput on modern CPUs.
+These figures demonstrate competitive throughput on modern CPUs (around 1GB/second)
 
 ## License
 
