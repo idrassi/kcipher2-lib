@@ -27,6 +27,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if defined(_M_X64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_IX86) || defined(__i386__)
+#include <emmintrin.h>
+#define K2CIPHER_SIMD
+#endif
+
 // Multiplication tables
 extern const KC_ALIGN(16) uint32_t amul0[256];
 extern const KC_ALIGN(16) uint32_t amul1[256];
@@ -351,6 +356,40 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
         // XOR input data with keystream in chunks
         remaining = chunk;
         cur_ks = &ctx->sbytes[32 - ctx->svalid];
+
+		// in case of x86/x64, use SSE2 instructions to process 32 and 16 bytes at a time
+#ifdef K2CIPHER_SIMD
+        if (remaining == 32) {
+            __m128i xmm0 = _mm_loadu_si128((__m128i*)src);
+            __m128i xmm1 = _mm_load_si128((__m128i*)cur_ks);
+            __m128i xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)dst, xmm2);
+            dst += 16;
+            src += 16;
+            cur_ks += 16;
+
+            xmm0 = _mm_loadu_si128((__m128i*)src);
+            xmm1 = _mm_load_si128((__m128i*)cur_ks);
+            xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)dst, xmm2);
+            dst += 16;
+            src += 16;
+            cur_ks += 16;
+
+			remaining = 0;
+        }
+
+        else if (remaining >= 16) {
+			__m128i xmm0 = _mm_loadu_si128((__m128i*)src);
+			__m128i xmm1 = _mm_loadu_si128((__m128i*)cur_ks);
+			__m128i xmm2 = _mm_xor_si128(xmm0, xmm1);
+			_mm_storeu_si128((__m128i*)dst, xmm2);
+			dst += 16;
+			src += 16;
+			cur_ks += 16;
+			remaining -= 16;
+		}
+#endif
         
         // Process 8 bytes at a time using uint64_t
         while (remaining >= 8) {
