@@ -195,10 +195,9 @@ static void next_for_init(k2cipher_ctx* ctx) {
 
 static void next(k2cipher_ctx* ctx) {
     uint32_t nA[5], nB[11];
-    uint32_t temp1, temp2;
-    uint64_t mask1;
-	uint64_t addr1;
+    uint32_t temp1, temp2, temp2_cond, mask;
     const uint32_t* ptr;
+    uint8_t b8;
 
     uint32_t nL1 = sub_k2(ctx->r2 + ctx->b[4]);
     uint32_t nR1 = sub_k2(ctx->l2 + ctx->b[9]);
@@ -229,28 +228,13 @@ static void next(k2cipher_ctx* ctx) {
 
     /* Update B[10] */
 
-	// Original code before optimization to remove branches
-    // 
-    //if (ctx->a[2] & 0x40000000) {
-    //    temp1 = (ctx->b[0] << 8) ^ amul1[ctx->b[0] >> 24];
-    //}
-    //else {
-    //    temp1 = (ctx->b[0] << 8) ^ amul2[ctx->b[0] >> 24];
-    //}
+    ptr = (ctx->a[2] & 0x40000000) ? amul1 : amul2;
+    temp1 = (ctx->b[0] << 8) ^ ptr[ctx->b[0] >> 24];
 
-    // mask1 will be 0xFFFFFFFFFFFFFFFF if (ctx->a[2] & 0x40000000) != 0, else 0.
-    mask1 = -(!!(ctx->a[2] & 0x40000000));
-	addr1 = (mask1 & (uint64_t)amul1) | (~mask1 & (uint64_t)amul2);
-	ptr = (const uint32_t*)addr1;
-    temp1 = (ctx->b[0] << 8) ^ (ptr[ctx->b[0] >> 24]);
-
-	// removing branch below doesn't lead to any performance improvement
-    temp2 = ctx->b[8];
-    if (ctx->a[2] & 0x80000000) {
-		uint8_t b8 = (uint8_t)(temp2 >> 24);
-		temp2 <<= 8;
-        temp2 ^= amul3[b8];
-    }
+    b8 = (uint8_t)(ctx->b[8] >> 24);
+    temp2_cond = (ctx->b[8] << 8) ^ amul3[b8];
+    mask = (uint32_t)-(int32_t)((ctx->a[2] & 0x80000000) >> 31);
+    temp2 = (temp2_cond & mask) | (ctx->b[8] & ~mask);
 
     nB[10] = temp1 ^ ctx->b[1] ^ ctx->b[6] ^ temp2;
 
