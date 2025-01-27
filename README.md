@@ -46,7 +46,7 @@ The repository contains:
 
 - **High-Performance on 64-bit platforms**  
   Includes optimizations 64-bit architectures, making heavy use of table lookups and minimal branching.  
-  Achieves throughputs in the range of 650–850 MB/s on typical modern x64 CPUs (see benchmark data below).
+  Achieves throughputs in the range of 900–1030 MB/s on typical modern x64 CPUs (see benchmark data below).
 
 - **Cross-Platform Cycle/Time Measurement**  
   `cpu_cycles.h` supports Windows, Linux, macOS, and ARM64, ensuring benchmarks can be performed on a wide range of hardware.
