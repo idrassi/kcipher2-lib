@@ -15,7 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="kcipher2-generate-tables.c">
+    <ClInclude Include="..\cpu_cycles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\kcipher2-test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

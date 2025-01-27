@@ -15,16 +15,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="kcipher2.c">
+    <ClCompile Include="..\kcipher2-generate-tables.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="kcipher2-tables.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="kcipher2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
