@@ -25,6 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach/mach.h>
+#include <mach/thread_policy.h>
+#include <pthread.h>
+#else
+#include <sched.h>
+#include <unistd.h>
+#endif
 
 
 /* Structure to hold test vectors */
@@ -79,6 +89,58 @@ static const test_vector test_vectors[] = {
         "D4B8DADE688023682FA4207683DEA5A44C1D95EAE959F5B42611F4"
     }
 };
+
+#ifdef _WIN32
+
+void set_cpu_affinity_single_core(void)
+{
+    // Pin the entire process to CPU core #0 on Windows
+    DWORD_PTR mask = 1; // 1 = CPU #0
+    if (!SetProcessAffinityMask(GetCurrentProcess(), mask))
+    {
+        fprintf(stderr, "Warning: SetProcessAffinityMask failed.\n");
+    }
+}
+
+#elif defined(__APPLE__)
+
+void set_cpu_affinity_single_core(void)
+{
+    // Best-effort approach on macOS: set a Mach thread affinity tag
+    // This is NOT strict pinning. The scheduler can still move your thread.
+    // Using a nonzero tag (e.g., 1) often groups this thread on one CPU,
+    // but there's no guarantee.
+
+    thread_port_t thread = pthread_mach_thread_np(pthread_self());
+    thread_affinity_policy_data_t policy = { 1 }; // Use 1 (not zero) to create an affinity “group”
+    kern_return_t kr = thread_policy_set(
+        thread,
+        THREAD_AFFINITY_POLICY,
+        (thread_policy_t)&policy,
+        THREAD_AFFINITY_POLICY_COUNT
+    );
+
+    if (kr != KERN_SUCCESS)
+    {
+        fprintf(stderr, "Warning: thread_policy_set failed with error %s\n", mach_error_string(kr));
+    }
+}
+
+#else
+
+void set_cpu_affinity_single_core(void)
+{
+    // Pin this process to CPU core #0 on Linux
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(0, &cpuset);
+    if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0)
+    {
+        perror("Warning: sched_setaffinity");
+    }
+}
+
+#endif
 
 /**
  * @brief Convert hex string to bytes
@@ -339,6 +401,11 @@ void print_benchmark() {
 
 
 int main() {
+
+    /* Ensure program runs in single CPU core for more reliable benchmark results */
+    set_cpu_affinity_single_core();
+
+	/* Run test vectors */
     int failed_tests = k2cipher_run_tests();
     if (failed_tests > 0) {
         printf("\nWARNING: Some tests failed!\n");
