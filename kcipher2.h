@@ -66,11 +66,11 @@ extern "C" {
 typedef struct {
     uint32_t a[5];        /**< A-register state */
     uint32_t b[11];       /**< B-register state */
-    uint32_t iv[4];       /**< Initialization vector */
-    uint32_t ik[12];      /**< Internal key state */
     uint32_t l1, r1;      /**< Left and right register 1 */
     uint32_t l2, r2;      /**< Left and right register 2 */
-    KC_ALIGN(32) uint8_t sbytes[32];    /**< Stream buffer */
+    uint32_t iv[4];       /**< Initialization vector */
+    uint32_t ik[12];      /**< Internal key state */
+    KC_ALIGN(32) uint8_t sbytes[64];    /**< Stream buffer */
     size_t svalid;           /**< Number of valid bytes in stream buffer */
 } k2cipher_ctx;
 

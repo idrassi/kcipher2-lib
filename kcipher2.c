@@ -312,10 +312,10 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
 
     while (i < len)
     {
-        // If no valid keystream bytes are left, generate 32 new bytes
+        // If no valid keystream bytes are left, generate 64 new bytes
         if (ctx->svalid == 0)
         {
-            for (j = 0; j < 4; j++)
+            for (j = 0; j < 8; j++)
             {
                 uint32_t zh, zl;
                 stream(ctx, &zh, &zl);
@@ -347,7 +347,7 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
                 //ctx->sbytes[8 * j + 7] = (uint8_t)(zl);
             }
 
-            ctx->svalid = 32;
+            ctx->svalid = 64;
         }
 
         // Determine how many bytes we can XOR in this iteration
@@ -355,31 +355,56 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
 
         // XOR input data with keystream in chunks
         remaining = chunk;
-        cur_ks = &ctx->sbytes[32 - ctx->svalid];
+        cur_ks = &ctx->sbytes[64 - ctx->svalid];
 
-		// in case of x86/x64, use SSE2 instructions to process 32 and 16 bytes at a time
+		// in case of x86/x64, use SSE2 instructions to process 64, 32 and 16 bytes at a time
 #ifdef K2CIPHER_SIMD
-        if (remaining == 32) {
+        if (remaining == 64) {
             __m128i xmm0 = _mm_loadu_si128((__m128i*)src);
             __m128i xmm1 = _mm_load_si128((__m128i*)cur_ks);
             __m128i xmm2 = _mm_xor_si128(xmm0, xmm1);
             _mm_storeu_si128((__m128i*)dst, xmm2);
-            dst += 16;
-            src += 16;
-            cur_ks += 16;
 
-            xmm0 = _mm_loadu_si128((__m128i*)src);
-            xmm1 = _mm_load_si128((__m128i*)cur_ks);
+            xmm0 = _mm_loadu_si128((__m128i*)(src + 16));
+            xmm1 = _mm_load_si128((__m128i*)(cur_ks + 16));
             xmm2 = _mm_xor_si128(xmm0, xmm1);
-            _mm_storeu_si128((__m128i*)dst, xmm2);
-            dst += 16;
-            src += 16;
-            cur_ks += 16;
+            _mm_storeu_si128((__m128i*)(dst + 16), xmm2);
 
-			remaining = 0;
+            xmm0 = _mm_loadu_si128((__m128i*)(src + 32));
+            xmm1 = _mm_load_si128((__m128i*)(cur_ks + 32));
+            xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)(dst + 32), xmm2);
+
+            xmm0 = _mm_loadu_si128((__m128i*)(src + 48));
+            xmm1 = _mm_load_si128((__m128i*)(cur_ks + 48));
+            xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)(dst + 48), xmm2);
+            dst += 64;
+            src += 64;
+            cur_ks += 64;
+
+            remaining = 0;
         }
 
-        else if (remaining >= 16) {
+        else if (remaining >= 32) {
+            __m128i xmm0 = _mm_loadu_si128((__m128i*)src);
+            __m128i xmm1 = _mm_load_si128((__m128i*)cur_ks);
+            __m128i xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)dst, xmm2);
+
+            xmm0 = _mm_loadu_si128((__m128i*)(src + 16));
+            xmm1 = _mm_load_si128((__m128i*)(cur_ks + 16));
+            xmm2 = _mm_xor_si128(xmm0, xmm1);
+            _mm_storeu_si128((__m128i*)(dst + 16), xmm2);
+
+            dst += 32;
+            src += 32;
+            cur_ks += 32;
+
+			remaining -= 32;
+        }
+
+        if (remaining >= 16) {
 			__m128i xmm0 = _mm_loadu_si128((__m128i*)src);
 			__m128i xmm1 = _mm_loadu_si128((__m128i*)cur_ks);
 			__m128i xmm2 = _mm_xor_si128(xmm0, xmm1);
@@ -389,10 +414,30 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
 			cur_ks += 16;
 			remaining -= 16;
 		}
+#else
+		// Process 32 bytes at a time using uint64_t
+		while (remaining >= 32) {
+			*(uint64_t*)dst = *(uint64_t*)src ^ *(uint64_t*)cur_ks;
+            *(uint64_t*)(dst + 8) = *(uint64_t*)(src + 8) ^ *(uint64_t*)(cur_ks + 8);
+			*(uint64_t*)(dst + 16) = *(uint64_t*)(src + 16) ^ *(uint64_t*)(cur_ks + 16);
+			*(uint64_t*)(dst + 24) = *(uint64_t*)(src + 24) ^ *(uint64_t*)(cur_ks + 24);
+			dst += 32;
+			src += 32;
+			cur_ks += 32;
+			remaining -= 32;
+		}
+
+        if (remaining >= 16) {
+			*(uint64_t*)dst = *(uint64_t*)src ^ *(uint64_t*)cur_ks;
+			*(uint64_t*)(dst + 8) = *(uint64_t*)(src + 8) ^ *(uint64_t*)(cur_ks + 8);
+			dst += 16;
+			src += 16;
+			cur_ks += 16;
+			remaining -= 16;
+		}
 #endif
-        
-        // Process 8 bytes at a time using uint64_t
-        while (remaining >= 8) {
+        // Process 8 bytes using uint64_t
+        if (remaining >= 8) {
             *(uint64_t*)dst = *(uint64_t*)src ^ *(uint64_t*)cur_ks;
             dst += 8;
             src += 8;
@@ -400,8 +445,8 @@ void k2cipher_crypt(k2cipher_ctx* ctx, uint8_t* dst, const uint8_t* src, size_t 
             remaining -= 8;
         }
         
-        // Process 4 bytes at a time using uint32_t
-        while (remaining >= 4) {
+        // Process 4 bytes using uint32_t
+        if (remaining >= 4) {
             *(uint32_t*)dst = *(uint32_t*)src ^ *(uint32_t*)cur_ks;
             dst += 4;
             src += 4;

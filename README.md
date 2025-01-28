@@ -46,7 +46,7 @@ The repository contains:
 
 - **High-Performance on 64-bit platforms**  
   Includes optimizations 64-bit architectures, making heavy use of table lookups and minimal branching.  
-  Achieves throughputs in the range of 900–1030 MB/s on typical modern x64 CPUs (see benchmark data below).
+  Achieves throughputs in the range of 900–1100 MB/s on typical modern x64 CPUs with 2.1 cycles/byte (see benchmark data below).
 
 - **Cross-Platform Cycle/Time Measurement**  
   `cpu_cycles.h` supports Windows, Linux, macOS, and ARM64, ensuring benchmarks can be performed on a wide range of hardware.
@@ -167,31 +167,31 @@ KCipher-2 Benchmark Results:
 ------------------------
 Data size:        65536 bytes
 Iterations:       30
-Time per run:     0.000060 seconds
-Throughput:       1035.97 MB/s
-                  8287.75 Mb/s
-Cycles per byte:  2.23
+Time per run:     0.000063 seconds
+Throughput:       991.38 MB/s
+                  7931.05 Mb/s
+Cycles per byte:  2.33
 ------------------------
 Data size:        1048576 bytes
 Iterations:       30
-Time per run:     0.000995 seconds
-Throughput:       1005.52 MB/s
-                  8044.16 Mb/s
-Cycles per byte:  2.29
+Time per run:     0.000903 seconds
+Throughput:       1107.86 MB/s
+                  8862.86 Mb/s
+Cycles per byte:  2.08
 ------------------------
 Data size:        10485760 bytes
 Iterations:       30
-Time per run:     0.010596 seconds
-Throughput:       943.78 MB/s
-                  7550.20 Mb/s
-Cycles per byte:  2.44
+Time per run:     0.009433 seconds
+Throughput:       1060.11 MB/s
+                  8480.89 Mb/s
+Cycles per byte:  2.18
 ------------------------
 Data size:        104857600 bytes
 Iterations:       30
-Time per run:     0.106749 seconds
-Throughput:       936.78 MB/s
-                  7494.21 Mb/s
-Cycles per byte:  2.46
+Time per run:     0.096230 seconds
+Throughput:       1039.17 MB/s
+                  8313.39 Mb/s
+Cycles per byte:  2.22
 ------------------------
 ```
 
